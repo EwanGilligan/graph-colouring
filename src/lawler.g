@@ -1,25 +1,30 @@
 LoadPackage("digraphs");
 
 IndexSubsets := function(vertices) 
-    return Sum(vertices, x-> 2^(x-1));
+    return Sum(vertices, x-> 2^(x-1) + 1);
 end;
 
 Lawler := function(g) 
-    local n, vertices, x, subset, s, S, maximal_independent_sets, independent_set, i, I;
+    local n, vertices, x, s, S, maximal_independent_sets, i, I, s_without_I, subset_iter;
     n := DigraphNrEdges(g);
     vertices := DigraphVertices(g);
     x := [1..2^n];
-    x[0] := 0;
-    for s in [2..2^n] do
+    x[1] := 0;
+    subset_iter := IteratorOfCombinations(vertices);
+    # Skip the first one, which should be the empty set.
+    NextIterator(subset_iter);
+    for s in subset_iter do
         S := IndexSubsets(s);
         x[S] := infinity;
-        maximal_independent_sets := DigraphIndependentSet(g, vertices{[1..s]});
+        maximal_independent_sets := DigraphMaximalIndependentSets(g, s);
         for I in maximal_independent_sets do
-            i := IndexSubsets(SubtractSet(S, I));
-            if x[i] + 1 < x[s] then
-                x[s] := x[i] + 1;
+            s_without_I := ShallowCopy(s);
+            SubtractSet(s_without_I, I);
+            i := IndexSubsets(s_without_I);
+            if x[i] + 1 < x[S] then
+                x[S] := x[i] + 1;
             fi;
         od;
     od;
-    return X[-1];
+    return x[-1];
 end;
