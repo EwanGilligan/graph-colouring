@@ -1,12 +1,12 @@
 LoadPackage("digraphs");
 
 IndexSubsets := function(vertices) 
-    return Sum(vertices, x-> 2^(x-1) + 1);
+    return Sum(vertices, x-> 2^(x-1)) + 1;
 end;
 
 Lawler := function(g) 
-    local n, vertices, x, s, S, maximal_independent_sets, i, I, s_without_I, subset_iter;
-    n := DigraphNrEdges(g);
+    local n, vertices, x, s, S, maximal_independent_sets, i, I, s_without_I, subset_iter, count, induced_subgraph;
+    n := DigraphNrVertices(g);
     vertices := DigraphVertices(g);
     x := [1..2^n];
     x[1] := 0;
@@ -16,15 +16,16 @@ Lawler := function(g)
     for s in subset_iter do
         S := IndexSubsets(s);
         x[S] := infinity;
-        maximal_independent_sets := DigraphMaximalIndependentSets(g, s);
-        for I in maximal_independent_sets do
+        induced_subgraph := InducedSubdigraph(g, s);
+        for I in DigraphMaximalIndependentSets(induced_subgraph) do
             s_without_I := ShallowCopy(s);
-            SubtractSet(s_without_I, I);
+            # Need to relabl the independent set back to the original labels.
+            SubtractSet(s_without_I, SetX(I, x -> DigraphVertexLabel(induced_subgraph, x)));
             i := IndexSubsets(s_without_I);
             if x[i] + 1 < x[S] then
                 x[S] := x[i] + 1;
             fi;
         od;
     od;
-    return x[-1];
+    return x[2^n]; 
 end;
