@@ -1,3 +1,6 @@
 [submodule "CS4099DOER"]
 	path = CS4099DOER
 	url = https://github.com/EwanGilligan/CS4099DOER
+[submodule "Digraphs"]
+	path = Digraphs
+	url = https://github.com/EwanGilligan/Digraphs
