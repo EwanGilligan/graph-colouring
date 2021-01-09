@@ -2,3 +2,5 @@
 plotting/target/
 
 *.json
+
+plotting/Cargo.lock
