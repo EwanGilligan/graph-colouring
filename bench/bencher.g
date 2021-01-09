@@ -3,6 +3,10 @@ LoadPackage("json");
 
 TimeFunc := function(config, func, input)
   local times, time_start, time_end, i;
+# Warmup Computation 
+  for i in [1..config.warmup] do
+    func(input);
+  od;
   GASMAN("collect");
   times := [];
   for i in [1..config.repetitions] do 
@@ -16,11 +20,7 @@ end;
 
 BenchWithInput := function(config, group, id, func, input) 
   local i, group_id_input, id_entry;
-  # Warmup Computation 
-  for i in [1..config.warmup] do
-    func(input);
-  od;
-  # Benchmark
+    # Benchmark
   group_id_input := rec(val := input, times := TimeFunc(config, func, input));
   id_entry := First(group.ids, x -> x.id = id);
   Add(id_entry.entries, group_id_input); 
