@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 plotters = "^0.3.0"
 serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}
+streaming-stats = "0.2"
