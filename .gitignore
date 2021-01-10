@@ -3,4 +3,6 @@ plotting/target/
 
 *.json
 
-plotting/Cargo.lock
+*.lock
+
+*.png
