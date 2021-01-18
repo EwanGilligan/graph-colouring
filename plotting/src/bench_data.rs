@@ -12,6 +12,6 @@ pub struct BenchID {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BenchEntry {
-    pub val : u64,
+    pub val : u32,
     pub times : Vec<u64>
 }
