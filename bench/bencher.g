@@ -1,26 +1,27 @@
-LoadPackage("io");
-LoadPackage("json");
+LoadPackage("io", false);
+LoadPackage("json", false);
 
-TimeFunc := function(config, func, input)
-  local times, time_start, time_end, i;
+TimeFunc := function(config, func, input_func, input)
+  local times, time_start, time_end, i, input_val;
   GASMAN("collect");
   times := [];
   for i in [1..(config.repetitions + config.warmup)] do 
+    input_val := input_func(input); 
     time_start := NanosecondsSinceEpoch();
-    func(input);
+    func(input_val);
     time_end := NanosecondsSinceEpoch();
     # Warmup Computation 
     if i > config.warmup then
       Add(times, time_end - time_start);
-    od;
+    fi;
   od;
   return times;
 end;
 
-BenchWithInput := function(config, group, id, func, input) 
+BenchWithInput := function(config, group, id, func, input_func, input) 
   local i, group_id_input, id_entry;
     # Benchmark
-  group_id_input := rec(val := input, times := TimeFunc(config, func, input));
+  group_id_input := rec(val := input, times := TimeFunc(config, func, input_func, input));
   id_entry := First(group.ids, x -> x.id = id);
   Add(id_entry.entries, group_id_input); 
 end;
