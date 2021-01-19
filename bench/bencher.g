@@ -3,17 +3,16 @@ LoadPackage("json");
 
 TimeFunc := function(config, func, input)
   local times, time_start, time_end, i;
-# Warmup Computation 
-  for i in [1..config.warmup] do
-    func(input);
-  od;
   GASMAN("collect");
   times := [];
-  for i in [1..config.repetitions] do 
+  for i in [1..(config.repetitions + config.warmup)] do 
     time_start := NanosecondsSinceEpoch();
     func(input);
     time_end := NanosecondsSinceEpoch();
-    Add(times, time_end - time_start);
+    # Warmup Computation 
+    if i > config.warmup then
+      Add(times, time_end - time_start);
+    od;
   od;
   return times;
 end;
