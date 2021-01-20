@@ -5,7 +5,7 @@ use stats::{stddev, mean};
 mod bench_data;
 fn main() -> Result<(), Box<dyn std::error::Error>>{
     
-    let data : bench_data::BenchGroup = read_data("../test.json")?;
+    let data : bench_data::BenchGroup = read_data("../data/RandomDigraphDensity.json")?;
     let plotting_data : Vec<Vec<_>> = data.ids.iter().map(|id| {
         id.entries.iter()
         .map(|ent| {
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>{
     let x_max = plotting_data.iter()
         .flat_map(|x|
              x.iter().map(|(x, _min, _mean, _max)| *x)
-        ).max().expect("Should be at least one data point"); 
+        ).fold(f32::NEG_INFINITY, |a, b| a.max(b)); 
     let root = BitMapBackend::new("test.png", (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>{
         .margin(20)
         .x_label_area_size(20)
         .y_label_area_size(40)
-        .build_cartesian_2d(0u32..(x_max + 1), 0f64..y_max)?;
+        .build_cartesian_2d(0f32..x_max, 0f64..y_max)?;
     chart
         .configure_mesh()
         .x_labels(5)
