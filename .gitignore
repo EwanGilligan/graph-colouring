@@ -6,3 +6,5 @@ plotting/target/
 *.lock
 
 *.png
+
+*.g6
