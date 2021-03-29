@@ -215,6 +215,7 @@ fn density_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     chart
         .configure_series_labels()
+        .position(SeriesLabelPosition::MiddleLeft)
         .background_style(WHITE.filled())
         .border_style(&BLACK)
         .draw()?;
