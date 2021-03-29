@@ -39,7 +39,6 @@ BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir)
   BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
 end;
 
-
 RunAll := function()
   local inputs, config, algs, alg_names, outdir, probabilities;
   # Setup
@@ -66,7 +65,7 @@ RunRandom := function(n)
   # Setup
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
-  config := NewBenchmarkConfig(1, 10); 
+  config := NewBenchmarkConfig(10, 50); 
   algs := [
     D -> ChromaticNumber(D, DigraphColouringAlgorithmChristofides),
     D -> ChromaticNumber(D, DigraphColouringAlgorithmZykov)
