@@ -23,8 +23,8 @@ EvalFunc := function(config, func, input_func, input)
   values := [];
   for i in [1..config.repetitions] do 
     input_val := input_func(input); 
-    val := func(input_val);
-    Add(values, val); 
+    val := func(input_val.val);
+    Add(values, rec(x := input_val.x, y := val)); 
   od;
   return values;
 end;
@@ -39,9 +39,9 @@ end;
 
 EvalWithInput := function(config, group, id, func, input_func, input) 
   local i, group_id_input, id_entry;
-  group_id_input := rec(val := input, times := EvalFunc(config, func, input_func, input));
+  group_id_input := EvalFunc(config, func, input_func, input);
   id_entry := First(group.ids, x -> x.id = id);
-  Add(id_entry.entries, group_id_input); 
+  id_entry.entries := group_id_input; 
 end;
 
 NewBenchmarkGroup := function(group_name_string)
