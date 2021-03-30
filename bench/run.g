@@ -150,18 +150,20 @@ BenchDualMoonMoser := function(inputs, algs, alg_names, config, outdir)
   BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
 end;
 
-BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir)
+BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir, prefix)
   local bench_group, bench_id, alg_num, i, D, name;
   name := StringFormatted("RandomDigraphDensity{}", n);
   bench_group := NewBenchmarkGroup(name); 
   for alg_num in [1..Length(algs)] do
+    Print(alg_names[alg_num], "\n");
     NewBenchmarkId(bench_group, alg_names[alg_num]); 
     for i in inputs do
+      Print(i, "\n");
       D := p -> DigraphRemoveLoops(RandomDigraph(n, p));
       BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], D, i);   
     od;
   od;
-  BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
+  BenchmarkToFile(bench_group, Concatenation(outdir, "/",prefix, name, ".json"));
 end;
 
 EvalWithRandom := function(n, algs, alg_names, config, outdir, name)
@@ -241,18 +243,22 @@ RunUpperBoundsBench := function()
                     0.7, 0.8, 0.9];
   config := NewBenchmarkConfig(10, 100); 
   Print("Upper Bounds Bench\n");
-  BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
-  BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
-  BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
+  BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
+  BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
+  BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
   BenchRandomSize(List([60 .. 120]), greedy_alg, greedy_alg_names, config, outdir);
 end;
 
 RunLowerBoundsBench := function() 
-  local config, probabilities;
+  local config, probabilities, high_probs;
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
-  config := NewBenchmarkConfig(10, 100); 
+
+  high_probs := [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
+  config := NewBenchmarkConfig(10, 50); 
   Print("Lower Bounds Bench\n");
+  BenchRandomDensity(20, probabilities, lb_alg, lb_alg_names,config, outdir, "LowerBounds"); 
+  BenchRandomDensity(30, high_probs, lb_alg, lb_alg_names,config, outdir, "LowerBounds"); 
   # Benchmark with different timings
 end;
 
@@ -260,8 +266,8 @@ RunCycleBench := function()
   local config;
   Print("Cycle Bench\n");
   config := NewBenchmarkConfig(10, 100);
-  BenchCycles(List([3, 5 .. 17]), all_alg, all_alg_names, config, outdir); 
-  BenchCycles(List([17, 19 .. 49]), bab_alg, bab_alg_names, config, outdir);
+  BenchCycles(List([3, 5 .. 13]), all_alg, all_alg_names, config, outdir); 
+  BenchCycles(List([3, 5 .. 25]), bab_alg, bab_alg_names, config, outdir);
 end;
 
 RunMoonMoser := function()
@@ -278,15 +284,19 @@ RunMoonMoser := function()
 end;
 
 RunRandom := function(n, algs, alg_names)
-  local inputs, config, probabilities;
+  local inputs, config, probabilities, small_config;
   Print("Random Comparison\n");
   # Setup
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
   config := NewBenchmarkConfig(10, 100); 
+  small_config := NewBenchmarkConfig(5, 50); 
   # Run benches
-  BenchRandomDensity(15, probabilities, mis_alg, mis_alg_names, config, outdir);
-  BenchRandomDensity(40, probabilities, bab_alg, bab_alg_names, config, outdir);
+  BenchRandomDensity(10, probabilities, mis_alg, mis_alg_names, config, outdir, "MIS");
+  BenchRandomDensity(15, probabilities, mis_alg, mis_alg_names, config, outdir, "MIS");
+  BenchRandomDensity(20, probabilities, bab_alg, bab_alg_names, config, outdir, "BAB");
+  BenchRandomDensity(30, probabilities, bab_alg, bab_alg_names, config, outdir, "BAB");
+  BenchRandomDensity(40, probabilities, bab_alg, bab_alg_names, small_config, outdir, "BAB");
 end;
 
 RunVSR := function()
@@ -294,11 +304,10 @@ RunVSR := function()
   Print("VSR Comparison\n");
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
-  config := NewBenchmarkConfig(10, 100); 
-  BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
-  BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
-  BenchRandomDensity(35, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
-  #TODO VSR comparison
+  config := NewBenchmarkConfig(10, 50); 
+  BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  BenchRandomDensity(25, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
 end;
 
 RunAll := function()
