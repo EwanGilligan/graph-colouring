@@ -31,6 +31,24 @@ clique_lb := function(D)
              ub := ub);
 end;
 
+large_clique_lb := function(D)
+  local init_colouring, lb, ub, clique, cliques, i;
+  # Initial greedy colouring for upper and lower bounds.
+  init_colouring := DIGRAPHS_GreedyDSATUR(D);
+  # Upper bound is colours used in greedy colouring.
+  ub := RankOfTransformation(init_colouring[1]);
+  # Initial clique in the graph
+  cliques := DigraphMaximalCliques(D);
+  clique := cliques[PositionMaximum(List(cliques, Length))];
+  lb := Length(clique);
+  init_colouring := ListX(DigraphVertices(D), x -> x ^ init_colouring[1]);
+  return rec(init_colouring := init_colouring,
+             clique := clique,
+             lb := lb,
+             ub := ub);
+end;
+
+
 brelaz_vsr := function(D, vertices, colouring, k)
   local v, u, cur_deg, min_deg;
   min_deg := infinity;

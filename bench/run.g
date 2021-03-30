@@ -59,23 +59,27 @@ vsr_alg_names := [
 lb_alg := [
   D -> DigraphColouring(D, ChromaticNumber(D)),
   D -> DIGRAPHS_ExactDSATUR(D, dsatur_lb, brelaz_vsr),
-  D -> DIGRAPHS_ExactDSATUR(D, clique_lb, brelaz_vsr)
+  D -> DIGRAPHS_ExactDSATUR(D, clique_lb, brelaz_vsr),
+  D -> DIGRAPHS_ExactDSATUR(D, large_clique_lb, brelaz_vsr)
 ];
 lb_alg_names := [
   "Baseline",
   "DSATUR Clique",
-  "Maximal Clique"
+  "Maximal Clique",
+  "Largest Maximal Clique"
 ];
 
 lb_val := [
   D -> ChromaticNumber(D),
   D -> dsatur_lb(DigraphSymmetricClosure(D)).lb,
-  D -> clique_lb(DigraphSymmetricClosure(D)).lb
+  D -> clique_lb(DigraphSymmetricClosure(D)).lb,
+  D -> large_clique_lb(DigraphSymmetricClosure(D)).lb
 ];
 lb_val_names := [
   "Chromatic Number",
   "DSATUR Bound",
-  "Maximal Clique Bound"
+  "Maximal Clique Bound",
+  "Largest Maximal Clique Bound"
 ];
 
 greedy_alg := [
@@ -98,19 +102,10 @@ greedy_bound_names := [
   "DSATUR Ordering",
 ];
 
-# Benchmark functions
-BenchCycles := function(inputs, algs, alg_names, config, outdir)
-  local bench_group, bench_id, alg_num, i, D;
-  bench_group := NewBenchmarkGroup("CycleDigraphs"); 
-  for alg_num in [1..Length(algs)] do
-    NewBenchmarkId(bench_group, alg_names[alg_num]); 
-    for i in inputs do
-      D := CycleDigraph(i);
-      BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], {x} -> D, i);   
-    od;
-  od;
-  BenchmarkToFile(bench_group, Concatenation(outdir, "/CycleDigraphs.json"));
-end;
+
+################################################################################
+# Benchmark Functions 
+################################################################################
 
 BenchCycles := function(inputs, algs, alg_names, config, outdir)
   local bench_group, bench_id, alg_num, i, D;
@@ -122,7 +117,37 @@ BenchCycles := function(inputs, algs, alg_names, config, outdir)
       BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], {x} -> D, i);   
     od;
   od;
-  BenchmarkToFile(bench_group, Concatenation(outdir, "/CycleDigraphs.json"));
+  BenchmarkToFile(bench_group, Concatenation(outdir,
+                                             StringFormatted("/CycleDigraphs{}-{}.json", 
+                                                             inputs[1], inputs[Length(inputs)])));
+end;
+
+BenchMoonMoser := function(inputs, algs, alg_names, config, outdir)
+  local bench_group, bench_id, alg_num, i, D, name;
+  name := StringFormatted("MoonMoser{}-{}", inputs[1], inputs[Length(inputs)]);
+  bench_group := NewBenchmarkGroup(name); 
+  for alg_num in [1..Length(algs)] do
+    NewBenchmarkId(bench_group, alg_names[alg_num]); 
+    for i in inputs do
+      D := MoonMoser(i);
+      BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], {x} -> D, i);   
+    od;
+  od;
+  BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
+end;
+
+BenchDualMoonMoser := function(inputs, algs, alg_names, config, outdir)
+  local bench_group, bench_id, alg_num, i, D, name;
+  name := StringFormatted("DualMoonMoser{}-{}", inputs[1], inputs[Length(inputs)]);
+  bench_group := NewBenchmarkGroup(name); 
+  for alg_num in [1..Length(algs)] do
+    NewBenchmarkId(bench_group, alg_names[alg_num]); 
+    for i in inputs do
+      D := DigraphRemoveLoops(DigraphDual(MoonMoser(i)));
+      BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], {x} -> D, i);   
+    od;
+  od;
+  BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
 end;
 
 BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir)
@@ -162,55 +187,131 @@ EvalWithRandom := function(n, algs, alg_names, config, outdir, name)
   BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json")); 
 end;
 
-RunUpperBoundsComparison := function(n)
+BenchRandomSize := function(inputs, algs, alg_names, config, outdir)
+  local bench_group, bench_id, alg_num, i, D;
+  bench_group := NewBenchmarkGroup("RandomDigrahSize"); 
+  for alg_num in [1..Length(algs)] do
+    NewBenchmarkId(bench_group, alg_names[alg_num]); 
+    for i in inputs do
+      D := x -> DigraphRemoveLoops(RandomDigraph(x));
+      BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], D, i);   
+    od;
+  od;
+  BenchmarkToFile(bench_group, Concatenation(outdir,
+                                             StringFormatted("/RandomDigraphSize{}-{}.json", 
+                                                             inputs[1], inputs[Length(inputs)]
+                                                             )
+                                            )
+                 );
+end;
+
+
+################################################################################
+# Specific Runs of Benchmarks
+################################################################################
+
+RunUpperBoundsComparison := function(n, rep)
   local name, config; 
-  config := NewBenchmarkConfig(0, 1000);
+  config := NewBenchmarkConfig(0, rep);
   name := StringFormatted("UpperBoundsComparison{}", n);
   EvalWithRandom(n, greedy_bound, greedy_bound_names, config, outdir, name);
 end;
 
-RunLowerBoundsComparison := function(n)
+RunLowerBoundsComparison := function(n, rep)
   local name, config; 
-  config := NewBenchmarkConfig(0, 1000);
+  config := NewBenchmarkConfig(0, rep);
   name := StringFormatted("LowerBoundsComparison{}", n);
-  EvalWithRandom(n, lb_val, lb_alg_names, config, outdir, name);
+  EvalWithRandom(n, lb_val, lb_val_names, config, outdir, name);
 end;
 
+RunBoundsComparison := function()
+  Print("Upper Bounds Comparison\n");
+  RunUpperBoundsComparison(20, 1000);
+  RunUpperBoundsComparison(40, 1000);
+  RunUpperBoundsComparison(60, 1000);
+  Print("Lower Bounds Comparison\n");
+  RunLowerBoundsComparison(20, 1000);
+  RunLowerBoundsComparison(40, 1000);
+  RunLowerBoundsComparison(60, 100);
+end;
 
-RunAll := function()
-  local inputs, config, algs, alg_names, outdir, probabilities;
-  # Setup
-  inputs := [11, 13, 15, 17, 19, 21, 23, 25];
-  probabilities := [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.50, 0.55, 0.6,
-                   0.65, 0.75, 0.85, 0.9, 0.95];
+RunUpperBoundsBench := function() 
+  local config, probabilities;
+  probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
+                    0.7, 0.8, 0.9];
   config := NewBenchmarkConfig(10, 100); 
-  algs := [
-    ChromaticNumber,
-    D -> ChromaticNumber(D, DigraphColouringAlgorithmZykov)
-  ];
-  alg_names := [
-    "Baseline",
-    "Zykov"
-  ];
-  # Run benches
-  BenchCycles(inputs, algs, alg_names, config, outdir);
-  BenchRandomDensity(30, probabilities, algs, alg_names, config, outdir);
+  Print("Upper Bounds Bench\n");
+  BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
+  BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
+  BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir); 
+  BenchRandomSize(List([60 .. 120]), greedy_alg, greedy_alg_names, config, outdir);
 end;
 
-RunRandom := function(n)
-  local inputs, config, algs, alg_names, outdir, probabilities;
+RunLowerBoundsBench := function() 
+  local config, probabilities;
+  probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
+                    0.7, 0.8, 0.9];
+  config := NewBenchmarkConfig(10, 100); 
+  Print("Lower Bounds Bench\n");
+  # Benchmark with different timings
+end;
+
+RunCycleBench := function()
+  local config;
+  Print("Cycle Bench\n");
+  config := NewBenchmarkConfig(10, 100);
+  BenchCycles(List([3, 5 .. 17]), all_alg, all_alg_names, config, outdir); 
+  BenchCycles(List([17, 19 .. 49]), bab_alg, bab_alg_names, config, outdir);
+end;
+
+RunMoonMoser := function()
+  local config;
+  Print("Moon Moser\n");
+  config := NewBenchmarkConfig(10, 100); 
+  # Moon Moser benches
+  BenchMoonMoser(List([6 .. 15], mis_alg, mis_alg_names, config, outdir));
+  BenchMoonMoser(List([], bab_alg, bab_alg_names, config, outdir));
+  Print("Dual Moon Moser\n");
+  # Dual Moon Moser Benches
+  BenchDualMoonMoser(List([6 .. 15], mis_alg, mis_alg_names, config, outdir));
+  BenchDualMoonMoser(List([12 .. 18], bab_alg, bab_alg_names, config, outdir));
+end;
+
+RunRandom := function(n, algs, alg_names)
+  local inputs, config, probabilities;
+  Print("Random Comparison\n");
   # Setup
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
-  config := NewBenchmarkConfig(10, 50); 
-  algs := [
-    D -> ChromaticNumber(D, DigraphColouringAlgorithmChristofides),
-    D -> ChromaticNumber(D, DigraphColouringAlgorithmZykov)
-  ];
-  alg_names := [
-    "Christofides",
-    "Zykov"
-  ];
+  config := NewBenchmarkConfig(10, 100); 
   # Run benches
-  BenchRandomDensity(n, probabilities, algs, alg_names, config, outdir);
+  BenchRandomDensity(15, probabilities, mis_alg, mis_alg_names, config, outdir);
+  BenchRandomDensity(40, probabilities, bab_alg, bab_alg_names, config, outdir);
+end;
+
+RunVSR := function()
+  local probabilities, config;
+  Print("VSR Comparison\n");
+  probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
+                    0.7, 0.8, 0.9];
+  config := NewBenchmarkConfig(10, 100); 
+  BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
+  BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
+  BenchRandomDensity(35, probabilities, vsr_alg, vsr_alg_names,config, outdir); 
+  #TODO VSR comparison
+end;
+
+RunAll := function()
+  # Cycle Benches 
+  RunCycleBench();
+  # Moon Moser
+  RunMoonMoser();
+  # Random Benches
+  RunRandom();
+  # Bounds Checking 
+  RunBoundsComparison();
+  RunUpperBoundsBench();
+  RunLowerBoundsBench();
+  # VSR Comparison
+  RunVSR();
 end;

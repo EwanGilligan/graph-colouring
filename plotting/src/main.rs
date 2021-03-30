@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn n_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let colours = vec![&BLACK, &BLUE, &CYAN, &GREEN, &MAGENTA, &RED];
+    let colours = vec![&BLUE, &GREEN, &MAGENTA, &RED, &CYAN, &BLACK];
     let mut colour_iter = colours.iter().cycle();
     print!("{}", filename);
     let data: bench_data::BenchGroup = read_data(filename)?;
@@ -94,7 +94,7 @@ fn n_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn probability_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let colours = vec![&BLACK, &BLUE, &CYAN, &GREEN, &MAGENTA, &RED];
+    let colours = vec![&BLUE, &GREEN, &MAGENTA, &RED, &CYAN, &BLACK];
     let mut colour_iter = colours.iter().cycle();
     let data: bench_data::BenchGroup = read_data(filename)?;
     let plotting_data: Vec<(String, Vec<_>)> = data
@@ -162,7 +162,7 @@ fn probability_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn density_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let colours = vec![&BLUE, &CYAN, &GREEN, &MAGENTA, &RED, &BLACK];
+    let colours = vec![&BLUE, &GREEN, &MAGENTA, &RED, &CYAN, &BLACK];
     let mut colour_iter = colours.iter().cycle();
     let data: bench_data::EvalGroup = read_eval_data(filename)?;
     let plotting_data: Vec<(String, Vec<_>)> = data
