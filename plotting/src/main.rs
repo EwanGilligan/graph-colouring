@@ -51,7 +51,7 @@ fn n_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .flat_map(|x| x.1.iter().map(|(x, _min, _mean, _max)| *x as i32))
         .max()
         .expect("Must be at least one point");
-    let plotname = format!("{}.png", data.group_name);
+    let plotname = format!("plots/{}.png", data.group_name);
     let root = BitMapBackend::new(&plotname, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
@@ -119,7 +119,7 @@ fn probability_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .flat_map(|x| x.1.iter().map(|(_x, _min, _mean, max)| *max))
         .fold(f64::NEG_INFINITY, |a, b| a.max(b));
-    let plotname = format!("{}.png", data.group_name);
+    let plotname = format!("plots/{}.png", data.group_name);
     let root = BitMapBackend::new(&plotname, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
@@ -184,7 +184,7 @@ fn density_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .flat_map(|x| x.1.iter().map(|(_x, y)| *y))
         .max()
         .expect("Must be at least one data point");
-    let plotname = format!("{}.png", data.group_name);
+    let plotname = format!("plots/{}.png", data.group_name);
     let root = BitMapBackend::new(&plotname, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
