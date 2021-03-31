@@ -152,7 +152,7 @@ end;
 
 BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir, prefix)
   local bench_group, bench_id, alg_num, i, D, name;
-  name := StringFormatted("RandomDigraphDensity{}", n);
+  name := StringFormatted("{}RandomDigraphDensity{}",prefix, n);
   bench_group := NewBenchmarkGroup(name); 
   for alg_num in [1..Length(algs)] do
     Print(alg_names[alg_num], "\n");
@@ -231,10 +231,11 @@ RunBoundsComparison := function()
   RunUpperBoundsComparison(20, 1000);
   RunUpperBoundsComparison(40, 1000);
   RunUpperBoundsComparison(60, 1000);
+  RunUpperBoundsComparison(80, 500);
+  # TODO try compare across sizes
   Print("Lower Bounds Comparison\n");
   RunLowerBoundsComparison(20, 1000);
   RunLowerBoundsComparison(40, 1000);
-  RunLowerBoundsComparison(60, 100);
 end;
 
 RunUpperBoundsBench := function() 
@@ -246,7 +247,7 @@ RunUpperBoundsBench := function()
   BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
   BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
   BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
-  BenchRandomSize(List([60 .. 120]), greedy_alg, greedy_alg_names, config, outdir);
+  BenchRandomSize(List([20 .. 120]), greedy_alg, greedy_alg_names, config, outdir);
 end;
 
 RunLowerBoundsBench := function() 
@@ -275,15 +276,15 @@ RunMoonMoser := function()
   Print("Moon Moser\n");
   config := NewBenchmarkConfig(10, 100); 
   # Moon Moser benches
-  BenchMoonMoser(List([6 .. 15], mis_alg, mis_alg_names, config, outdir));
-  BenchMoonMoser(List([], bab_alg, bab_alg_names, config, outdir));
+  BenchMoonMoser(List([6 .. 15]), mis_alg, mis_alg_names, config, outdir);
+  BenchMoonMoser(List([6 .. 39]), bab_alg, bab_alg_names, config, outdir);
   Print("Dual Moon Moser\n");
   # Dual Moon Moser Benches
-  BenchDualMoonMoser(List([6 .. 15], mis_alg, mis_alg_names, config, outdir));
-  BenchDualMoonMoser(List([12 .. 18], bab_alg, bab_alg_names, config, outdir));
+  BenchDualMoonMoser(List([6 .. 15]), mis_alg, mis_alg_names, config, outdir);
+  BenchDualMoonMoser(List([12 .. 18]), bab_alg, bab_alg_names, config, outdir);
 end;
 
-RunRandom := function(n, algs, alg_names)
+RunRandom := function()
   local inputs, config, probabilities, small_config;
   Print("Random Comparison\n");
   # Setup
@@ -300,14 +301,16 @@ RunRandom := function(n, algs, alg_names)
 end;
 
 RunVSR := function()
-  local probabilities, config;
+  local probabilities, config, high_probs;
   Print("VSR Comparison\n");
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
+  high_probs := [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
   config := NewBenchmarkConfig(10, 50); 
   BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
   BenchRandomDensity(25, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
   BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  BenchRandomDensity(40, high_probs, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
 end;
 
 RunAll := function()
