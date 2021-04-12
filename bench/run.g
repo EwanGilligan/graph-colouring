@@ -62,6 +62,11 @@ lb_alg := [
   D -> DIGRAPHS_ExactDSATUR(D, clique_lb, brelaz_vsr),
   D -> DIGRAPHS_ExactDSATUR(D, large_clique_lb, brelaz_vsr)
 ];
+lb_alg_shortlist := [
+  D -> DigraphColouring(D, ChromaticNumber(D)),
+  D -> DIGRAPHS_ExactDSATUR(D, dsatur_lb, brelaz_vsr),
+  D -> DIGRAPHS_ExactDSATUR(D, clique_lb, brelaz_vsr),
+];
 lb_alg_names := [
   "Baseline",
   "DSATUR Clique",
@@ -93,8 +98,8 @@ greedy_alg_names := [
 
 greedy_bound := [
   D -> ChromaticNumber(D),
-  D -> RankOfTransformation(DigraphGreedyColouring(D)),
-  D -> RankOfTransformation(DigraphGreedyColouring(D, DigraphColouringAlgorithmDSATUR))
+  D -> RankOfTransformation(DigraphGreedyColouring(D), DigraphNrVertices(D)),
+  D -> RankOfTransformation(DigraphGreedyColouring(D, DigraphColouringAlgorithmDSATUR), DigraphNrVertices(D))
 ];
 greedy_bound_names := [
   "ChromaticNumber",
@@ -152,7 +157,7 @@ end;
 
 BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir, prefix)
   local bench_group, bench_id, alg_num, i, D, name;
-  name := StringFormatted("{}RandomDigraphDensity{}",prefix, n);
+  name := StringFormatted("{}RandomDigraphDensity{}", prefix, n);
   bench_group := NewBenchmarkGroup(name); 
   for alg_num in [1..Length(algs)] do
     Print(alg_names[alg_num], "\n");
@@ -163,7 +168,7 @@ BenchRandomDensity := function(n, inputs, algs, alg_names, config, outdir, prefi
       BenchWithInput(config, bench_group, alg_names[alg_num], algs[alg_num], D, i);   
     od;
   od;
-  BenchmarkToFile(bench_group, Concatenation(outdir, "/",prefix, name, ".json"));
+  BenchmarkToFile(bench_group, Concatenation(outdir, "/", name, ".json"));
 end;
 
 EvalWithRandom := function(n, algs, alg_names, config, outdir, name)
@@ -231,8 +236,6 @@ RunBoundsComparison := function()
   RunUpperBoundsComparison(20, 1000);
   RunUpperBoundsComparison(40, 1000);
   RunUpperBoundsComparison(60, 1000);
-  RunUpperBoundsComparison(80, 500);
-  # TODO try compare across sizes
   Print("Lower Bounds Comparison\n");
   RunLowerBoundsComparison(20, 1000);
   RunLowerBoundsComparison(40, 1000);
@@ -244,9 +247,9 @@ RunUpperBoundsBench := function()
                     0.7, 0.8, 0.9];
   config := NewBenchmarkConfig(10, 100); 
   Print("Upper Bounds Bench\n");
-  BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
-  BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
-  BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
+  #BenchRandomDensity(60, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
+  #BenchRandomDensity(80, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
+  #BenchRandomDensity(100, probabilities, greedy_alg, greedy_alg_names,config, outdir, "UpperBounds"); 
   BenchRandomSize(List([20 .. 120]), greedy_alg, greedy_alg_names, config, outdir);
 end;
 
@@ -258,8 +261,8 @@ RunLowerBoundsBench := function()
   high_probs := [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
   config := NewBenchmarkConfig(10, 50); 
   Print("Lower Bounds Bench\n");
-  BenchRandomDensity(20, probabilities, lb_alg, lb_alg_names,config, outdir, "LowerBounds"); 
-  BenchRandomDensity(30, high_probs, lb_alg, lb_alg_names,config, outdir, "LowerBounds"); 
+  #BenchRandomDensity(30, probabilities, lb_alg, lb_alg_names,config, outdir, "LowerBounds"); 
+  BenchRandomDensity(40, probabilities, lb_alg_shortlist, lb_alg_names,config, outdir, "LowerBounds"); 
   # Benchmark with different timings
 end;
 
@@ -291,13 +294,13 @@ RunRandom := function()
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
   config := NewBenchmarkConfig(10, 100); 
-  small_config := NewBenchmarkConfig(5, 50); 
+  small_config := NewBenchmarkConfig(10, 500); 
   # Run benches
   BenchRandomDensity(10, probabilities, mis_alg, mis_alg_names, config, outdir, "MIS");
   BenchRandomDensity(15, probabilities, mis_alg, mis_alg_names, config, outdir, "MIS");
   BenchRandomDensity(20, probabilities, bab_alg, bab_alg_names, config, outdir, "BAB");
   BenchRandomDensity(30, probabilities, bab_alg, bab_alg_names, config, outdir, "BAB");
-  BenchRandomDensity(40, probabilities, bab_alg, bab_alg_names, small_config, outdir, "BAB");
+  # BenchRandomDensity(40, probabilities, bab_alg, bab_alg_names, small_config, outdir, "BAB");
 end;
 
 RunVSR := function()
@@ -305,25 +308,28 @@ RunVSR := function()
   Print("VSR Comparison\n");
   probabilities := [0.1, 0.2, 0.3, 0.4, 0.50, 0.6,
                     0.7, 0.8, 0.9];
-  high_probs := [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
-  config := NewBenchmarkConfig(10, 50); 
-  BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
-  BenchRandomDensity(25, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
-  BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
-  BenchRandomDensity(40, high_probs, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  high_probs := [0.75, 0.8, 0.85, 0.9, 0.95];
+  config := NewBenchmarkConfig(10, 500); 
+  #BenchMoonMoser(List([6, 9 .. 81]), vsr_alg, vsr_alg_names, config, outdir);
+  #BenchDualMoonMoser(List([6, 9 .. 48]), vsr_alg, vsr_alg_names, config, outdir);
+  #BenchCycles(List([3, 5 .. 29]), vsr_alg, vsr_alg_names, config, outdir);
+  #BenchRandomDensity(20, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  #BenchRandomDensity(30, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  #BenchRandomDensity(40, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR"); 
+  BenchRandomDensity(50, probabilities, vsr_alg, vsr_alg_names,config, outdir, "VSR");
 end;
 
 RunAll := function()
   # Cycle Benches 
-  RunCycleBench();
+  #RunCycleBench();
   # Moon Moser
-  RunMoonMoser();
+  #RunMoonMoser();
   # Random Benches
   RunRandom();
   # Bounds Checking 
-  RunBoundsComparison();
-  RunUpperBoundsBench();
-  RunLowerBoundsBench();
+  #RunBoundsComparison();
+  #RunUpperBoundsBench();
+  #RunLowerBoundsBench();
   # VSR Comparison
-  RunVSR();
+  # RunVSR();
 end;

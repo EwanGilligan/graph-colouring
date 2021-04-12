@@ -51,6 +51,11 @@ fn n_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .flat_map(|x| x.1.iter().map(|(x, _min, _mean, _max)| *x as i32))
         .max()
         .expect("Must be at least one point");
+    let x_min = plotting_data
+        .iter()
+        .flat_map(|x| x.1.iter().map(|(x, _min, _mean, _max)| *x as i32))
+        .min()
+        .expect("Must be at least one point");
     let plotname = format!("plots/{}.png", data.group_name);
     let root = BitMapBackend::new(&plotname, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
@@ -61,13 +66,13 @@ fn n_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .y_label_area_size(30)
         .set_label_area_size(LabelAreaPosition::Left, 60)
         .set_label_area_size(LabelAreaPosition::Bottom, 40)
-        .build_cartesian_2d(0i32..(x_max + 1), 0f64..y_max)?;
+        .build_cartesian_2d(x_min..(x_max + 1), 0f64..y_max)?;
     chart
         .configure_mesh()
         .x_labels(10)
         .x_desc("n")
         .y_labels(5)
-        .y_label_formatter(&|y| format!("{:+e}", y))
+        .y_label_formatter(&|y| format!("{:+e}", y.round()))
         .y_desc("Mean Time (ns)")
         .draw()?;
     for (name, id) in &plotting_data {
@@ -119,6 +124,10 @@ fn probability_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .flat_map(|x| x.1.iter().map(|(_x, _min, _mean, max)| *max))
         .fold(f64::NEG_INFINITY, |a, b| a.max(b));
+    let x_min = plotting_data
+        .iter()
+        .flat_map(|x| x.1.iter().map(|(x, _min, _mean, _max)| *x))
+        .fold(f32::INFINITY, |a, b| a.min(b));
     let plotname = format!("plots/{}.png", data.group_name);
     let root = BitMapBackend::new(&plotname, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
@@ -135,7 +144,7 @@ fn probability_plot(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
         .x_labels(10)
         .x_desc("p")
         .y_labels(5)
-        .y_label_formatter(&|y| format!("{:+e}", y))
+        .y_label_formatter(&|y| format!("{:+e}", y.round()))
         .y_desc("Mean Time (ns)")
         .draw()?;
     for (name, id) in &plotting_data {
